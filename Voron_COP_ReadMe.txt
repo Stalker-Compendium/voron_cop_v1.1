@@ -1,14 +1,3 @@
-VORON MOD for STALKER Call Of Pripyat
-
-Created  :   04.01.2010
-Last edit:   07.02.2010
-Copyright:   2010 Stalker Compendium
-Author   :   Xavier De La Obra (stalkercompendium@free.fr)
-Country  :   France	
-Version  :   1.1
-
-______________________________________________________________________________
-
 Desription:
 
 This is the newest version of the Voron Mod for COP.
