@@ -1,0 +1,28 @@
+-- File:        MOD_UTILS.SCRIPT
+-- Description: VORON MOD utilities functions for STALKER COP
+-- Created:     15.10.2009
+-- Last edit:	22.01.2010
+-- Copyright:   2010 Stalker Compendium
+-- Author:      Xavier De La Obra(stalkercompendium@free.fr)
+-- Version:     0.1
+
+tbl = {}
+
+class "utils"(CUIWindow)
+
+function utils:__init() super()
+end
+
+function utils:__finalize()
+end
+
+function utils:FillTable(tbl_list)
+	for i = 1, #tbl_list do
+		local count = table.maxn (tbl_list[i])
+				
+		for j = 1, count do
+			table.insert (tbl, tbl_list[i][j])
+		end
+	end
+	return tbl
+end

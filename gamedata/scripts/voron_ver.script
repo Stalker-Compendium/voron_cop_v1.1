@@ -1,0 +1,11 @@
+-- File:        MOD_VER.SCRIPT
+-- Description: Mod version in STALKER main menu for VORON MOD
+-- Created:     15.10.2009
+-- Last edit:	10.01.2010
+-- Copyright:   2010 Stalker Compendium
+-- Author:      Xavier De La Obra(stalkercompendium@free.fr)
+-- Version:     0.1
+
+mod_title = "Voron Mod"
+mod_version = "1.1"
+  

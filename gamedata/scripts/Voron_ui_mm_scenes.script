@@ -1,0 +1,154 @@
+-- File:        VORON_UI_MM_SCENES_DLG.SCRIPT
+-- Description: Spawner Dialog for STALKER COP
+-- Created:     06.02.2010
+-- Last edit:	07.02.2010
+-- Copyright:   2010 STALKER COMPENDIUM
+-- Author:      Xavier De La Obra (stalkercompendium@free.fr)
+-- Version:     0.1
+
+local scenes_tbl = {}
+
+class "set_list_text" (CUIListBoxItem)
+
+function set_list_text:__init(height) super(height)
+--[[	
+	self.name					= self:GetTextItem()
+	self.name:SetWndRect		(Frect():set(0,0,300,22))
+	self:SetTextColor			(GetARGB(255, 210, 210, 210))
+	self.name:SetFont			(GetFontLetterica18Russian())
+	self.name:SetWndSize		(vector2():set(400,height))
+	self.name:SetEllipsis		(true)
+]]	
+	self.text 					= self:GetTextItem()
+	self.text:SetWndRect		(Frect():set(0,0,300,22))
+	self:SetTextColor(GetARGB   (255, 216, 186, 140))
+	self.text:SetFont           (GetFontLetterica18Russian())
+	self.text:SetEllipsis       (true)
+end
+
+
+class "scn_itm_dlg" (CUIScriptWnd)
+
+function scn_itm_dlg:__init() super()
+	self:InitControls()
+	self:InitCallBacks()
+	self:FillList()
+end
+
+function scn_itm_dlg:__finalize()
+end
+
+function scn_itm_dlg:InitControls()
+	self:SetWndRect(Frect():set(0,0,1024,768))
+	
+	local xml				= CScriptXmlInit()
+	local ctrl
+	xml:ParseFile			("voron_ui_mm_scenes_dlg.xml")
+
+	xml:InitStatic			("background",self)
+	
+	ctrl		  			= CUIWindow()
+	
+	self.form				= xml:InitStatic("form",self)
+	
+	xml:InitStatic			("form:voron_mod_icon", self)
+	xml:InitStatic			("form:caption",self.form)
+
+	self.list_frame = xml:InitFrame	("form:list_frame",self)
+	self.list = xml:InitListBox		("form:list",self)
+
+	self.list:ShowSelectedItem		(true)
+	self:Register					(self.list, "list_window")
+
+	self.check_teleport				= xml:InitCheck("form:check_teleport_actor",self)
+	self.check_spawn_items			= xml:InitCheck("form:check_spawn_items",self)
+	self.check_teleport:SetCheck	(true)
+	self.check_spawn_items:SetCheck	(true)
+	ctrl							= xml:Init3tButton("form:btn_go",self)
+	self:Register					(ctrl, "btn_go")
+
+	ctrl 							= xml:Init3tButton("form:btn_close",self)
+	self:Register					(ctrl, "btn_close")
+end
+
+function scn_itm_dlg:InitCallBacks()
+	self:AddCallback("btn_go",		    ui_events.BUTTON_CLICKED,             self.OnButton_go_clicked,	self)
+	self:AddCallback("btn_close",		ui_events.BUTTON_CLICKED,             self.OnButton_close_clicked,	self)
+	self:AddCallback("list_window",		ui_events.WINDOW_LBUTTON_DB_CLICK,	  self.OnButton_create_clicked,	self)
+end
+
+function scn_itm_dlg:FillList()
+	local scenes_ini = ini_file("scripts\\scenes.ltx")
+	local level_name = level.name()
+	if not scenes_ini:section_exist(level_name) then
+		return
+	end
+	
+	local line_count = scenes_ini:line_count(level_name)
+	for line_number = 1, line_count do
+		local result, id, value  = scenes_ini:r_line(level_name, line_number, "", "")
+		local parsed_value = utils.parse_params(value)
+		scenes_tbl[id] = parsed_value
+		
+		local _itm = set_list_text(22)
+		--local name = game.translate_string(system_ini():r_string(parsed_value[line_number], "inv_name"))
+		
+		--_itm.name:SetText(name)
+		_itm.text:SetText(id)
+
+		self.list:AddExistingItem(_itm)
+	end
+end
+
+function scn_itm_dlg:OnButton_go_clicked()
+	if self.list:GetSize() == 0 then
+		return
+	end
+
+	local item = self.list:GetSelectedItem()
+
+	if item == nil then
+		return
+	end
+	local itmname = item.text:GetText()
+	if scenes_tbl[itmname][1] ~= nil then
+		db.actor:give_info_portion(scenes_tbl[itmname][1])
+	end
+	if self.check_teleport:GetCheck() then
+		local point
+		if scenes_tbl[itmname][2] ~= nil then
+			point = patrol(scenes_tbl[itmname][2])
+			db.actor:set_actor_position(point:point(0))
+		end
+		if scenes_tbl[itmname][3] ~= nil then
+			local look = patrol(scenes_tbl[itmname][3])
+			local dir = -look:point(0):sub(point:point(0)):getH()
+			db.actor:set_actor_direction(dir)
+		end
+	end
+	if self.check_spawn_items:GetCheck() then
+		if scenes_tbl[itmname][4] ~= nil then
+			local spawn_items = utils.parse_names(scenes_tbl[itmname][4])
+			for k,v in pairs (spawn_items) do
+				alife():create(v, db.actor:position(), 0, 0, db.actor:id())
+			end
+		end
+	end
+    self:OnButton_close_clicked()
+end
+
+function scn_itm_dlg:OnButton_close_clicked()
+	local console 	= get_console()
+	console:execute	("main_menu off")
+end
+
+function scn_itm_dlg:OnKeyboard(dik, keyboard_action)
+	local bind = dik_to_bind(dik)
+	if bind == key_bindings.kQUIT then
+		self:OnButton_close_clicked()
+	elseif dik == 28 then
+		self:OnButton_create_clicked()
+	end
+
+	return true
+end
